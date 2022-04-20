@@ -25,10 +25,10 @@ MonoBehaviour:
     MieG: 0
     ExtinctionRayleigh: 0.2
     NoiseScale: 100
-    NoiseIntensity: 0.3
+    NoiseIntensity: 0.5
   blurSetting:
     material: {fileID: 2100000, guid: 1201514dfa7dd444e918a86745d7554d, type: 2}
-    blurOffset: 1
+    blurOffset: 1.5
   blitSetting:
     material: {fileID: 2100000, guid: bf66acbae984943dc9fffcfc6c213c7b, type: 2}
 --- !u!114 &11400000

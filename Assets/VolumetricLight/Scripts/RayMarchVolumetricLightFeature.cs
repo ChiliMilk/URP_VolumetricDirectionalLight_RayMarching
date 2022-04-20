@@ -167,11 +167,11 @@ public class RayMarchVolumetricLightFeature : ScriptableRendererFeature
             }
             CommandBuffer cmd = CommandBufferPool.Get("BlurVolumeLight");
 
-            setting.material.SetFloat("_blurOffset", setting.blurOffset);
+            cmd.SetGlobalFloat("_blurOffset", setting.blurOffset);
             Blit(cmd, volumetricLightMaskId, tempId, setting.material, 0);
             Blit(cmd, tempId, volumetricLightMaskId, setting.material, 1);
 
-            setting.material.SetFloat("_blurOffset", setting.blurOffset+0.5f);
+            cmd.SetGlobalFloat("_blurOffset", setting.blurOffset + 0.5f);
             Blit(cmd, volumetricLightMaskId, tempId, setting.material, 0);
             Blit(cmd, tempId, volumetricLightMaskId, setting.material, 1);
 

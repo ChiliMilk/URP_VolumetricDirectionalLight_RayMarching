@@ -52,8 +52,8 @@ Shader "Custom/RenderFeature/Blur"
                 
                 half mask = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).r ;
 			    mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( 0, i ) * _MainTex_TexelSize.xy).r;
-                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( i, 0 ) * _MainTex_TexelSize.xy).r;
-                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( -i, 0 ) * _MainTex_TexelSize.xy).r;
+                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( 0, i * 2 ) * _MainTex_TexelSize.xy).r;
+                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( 0, -i * 2 ) * _MainTex_TexelSize.xy).r;
                 mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( 0, -i ) * _MainTex_TexelSize.xy).r;
 
                 return mask / 5.0;
@@ -103,10 +103,10 @@ Shader "Custom/RenderFeature/Blur"
                 int i = _blurOffset;
                 
                 half mask = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).r ;
-			    mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( i, i ) * _MainTex_TexelSize.xy).r;
-                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( i, -i ) * _MainTex_TexelSize.xy).r;
-                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( -i, i ) * _MainTex_TexelSize.xy).r;
-                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( -i, -i ) * _MainTex_TexelSize.xy).r;
+			    mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( i, 0 ) * _MainTex_TexelSize.xy).r;
+                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( i * 2, 0 ) * _MainTex_TexelSize.xy).r;
+                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( -i, 0 ) * _MainTex_TexelSize.xy).r;
+                mask += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv + float2( -i * 2, 0 ) * _MainTex_TexelSize.xy).r;
                 
                 return mask / 5.0;
 			}
