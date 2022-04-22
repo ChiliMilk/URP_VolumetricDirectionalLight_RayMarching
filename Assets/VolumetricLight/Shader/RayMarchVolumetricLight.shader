@@ -17,14 +17,16 @@ Shader "Custom/RenderFeature/RayMarchVolumetricLight"
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma shader_feature _RAYLEIGH
             //#pragma multi_compile _ SHADOWS_SHADOWMASK
-
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            
             #pragma vertex vert
             #pragma fragment frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
+            
             float4x4 _InvVP;
             int _SampleCount;
             half _MaxRayDistance;
@@ -73,6 +75,28 @@ Shader "Custom/RenderFeature/RayMarchVolumetricLight"
                 return 0.05968 * (1.0 + cos * cos);
             }
 
+            half AdditionalLightRealtimeShadowVolumetric(int lightIndex, float3 positionWS, half3 lightDirection)
+            {
+                half4 shadowParams = GetAdditionalLightShadowParams(lightIndex);
+                int shadowSliceIndex = shadowParams.w;
+                half isPointLight = shadowParams.z;
+                UNITY_BRANCH
+                if (isPointLight)
+                {
+                    return 0.0;
+                }
+
+                ShadowSamplingData shadowSamplingData = GetAdditionalLightShadowSamplingData();
+
+                UNITY_BRANCH
+                if (shadowSliceIndex < 0)
+                    return 1.0;
+
+                float4 shadowCoord = mul(_AdditionalLightsWorldToShadow[shadowSliceIndex], float4(positionWS, 1.0));
+
+                return SampleShadowmap(TEXTURE2D_ARGS(_AdditionalLightsShadowmapTexture, sampler_AdditionalLightsShadowmapTexture), shadowCoord, shadowSamplingData, shadowParams, true);
+            }
+
             half RayMarchShadowAttention(float2 positionNDC)
             {
                 Light mainLight = GetMainLight();
@@ -85,7 +109,7 @@ Shader "Custom/RenderFeature/RayMarchVolumetricLight"
                 half rayLength = min(_MaxRayDistance,rayDirLength);
                 half stepSize = rayLength / _SampleCount;
                 half cos = dot(mainLight.direction,-rayDir);
-                float2 noiseUV = TRANSFORM_TEX(float2(positionNDC.x,positionNDC.y * _ScreenParams.y/_ScreenParams.x),_NoiseTex);
+                float2 noiseUV = TRANSFORM_TEX(float2(positionNDC.x,positionNDC.y * _ScreenParams.y/_ScreenParams.x), _NoiseTex);
                 half noise = SAMPLE_TEXTURE2D(_NoiseTex,sampler_point_repeat_noise,noiseUV * _NoiseScale).r * _NoiseIntensity;
                 noise = 1.0 - noise;
                 half3 rayEndPosition = cameraPosWS + rayDir * stepSize * noise;
@@ -103,11 +127,19 @@ Shader "Custom/RenderFeature/RayMarchVolumetricLight"
                 phase = RayleighPhase(cos);
 #endif
                 half FinalAtten = 0;
+                uint pixelLightCount = int(_AdditionalLightsCount.x);
+
                 [loop]
                 for(int i = 0; i< _SampleCount; ++i)
                 {
                     half atten = MainLightRealtimeShadow(TransformWorldToShadowCoord(rayEndPosition));
                     extinction += extinctionCoef * stepSize;
+                    
+                    for (uint lightIndex = 0u; lightIndex < pixelLightCount; ++lightIndex) {
+                        Light light = GetAdditionalLight(lightIndex, rayEndPosition);
+                        atten += AdditionalLightRealtimeShadowVolumetric(lightIndex, rayEndPosition, light.direction) * light.distanceAttenuation;
+                    }
+
                     FinalAtten += atten * exp(-extinction);
                     rayEndPosition += rayDir * stepSize * noise;
                 }
